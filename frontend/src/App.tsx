@@ -14,8 +14,7 @@ function App() {
     {
       id: 'welcome',
       sender: 'system',
-      text: 'Mabuhay! Welcome to OmniJuris. I am grounded directly in Philippine Supreme Court decisions, statutes, and executive issuances. How can I assist your legal research today?'
-    }
+      text: 'Mabuhay! Welcome to OmniJuris. I am grounded directly in Philippine Supreme Court jurisprudence, republic acts, and executive issuances. How can I assist your legal research today?'    }
   ]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -69,6 +68,9 @@ function App() {
     <div className="omnijuris-workspace">
       {/* Sidebar Controls */}
       <aside className="sidebar">
+        <span className="ai-avatar">
+          <img src="/omnijuris.png" alt="OmniJuris Logo" className="side-avatar-img" />
+        </span>
         <div className="sidebar-header">
           <h2>OmniJuris</h2>
           <p>Philippine Legal Intelligence</p>
@@ -118,7 +120,9 @@ function App() {
                 {msg.sender === 'system' ? (
                   <div className="ai-content-canvas">
                     <div className="author-meta">
-                      <span className="ai-avatar">⚖️</span>
+                      <span className="ai-avatar">
+                        <img src="/omnijuris.png" alt="OmniJuris Logo" className="avatar-img" />
+                      </span>
                       <span className="author-name">OmniJuris</span>
                       {msg.engineMode && <span className="badge">{msg.engineMode}</span>}
                     </div>
@@ -146,7 +150,9 @@ function App() {
               <div className="chat-row system">
                 <div className="ai-content-canvas clean-loading">
                   <div className="author-meta">
-                    <span className="ai-avatar processing-pulse">⚖️</span>
+                    <span className="ai-avatar processing-pulse">
+                      <img src="/omnijuris.png" alt="OmniJuris Logo" className="avatar-img" />
+                    </span>
                     <span className="author-name">OmniJuris</span>
                   </div>
                   <div className="typing-indicator">

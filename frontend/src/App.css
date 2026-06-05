@@ -1,25 +1,31 @@
 :root {
-  --bg-main: #0d0e11;
-  --bg-sidebar: #14161a;
-  --bg-input: #1e2026;
-  --bg-bubble-user: #2b313e;
-  --border-subtle: #222630;
+  /* Deep slate/navy backgrounds to make the gold pop perfectly */
+  --bg-main: #0e1116;
+  --bg-sidebar: #101319;
+  --bg-input: #181c25;
+  --bg-bubble-user: #1f2532;
+  --border-subtle: #222733;
+  
+  /* Text */
   --text-primary: #f3f4f6;
   --text-secondary: #d1d5db;
-  --text-dim: #6b7280;
-  --gold-accent: #dfc299;
+  --text-dim: #828a9b;
+  
+  /* The New Brand Accent */
+  --accent-gold: #d3b03d;
   
   /* Precision Glow Radiance Maps */
-  --glow-blue: rgba(59, 130, 246, 0.2);
-  --glow-green: rgba(16, 185, 129, 0.2);
-  --glow-gold: rgba(223, 194, 153, 0.15);
+  --glow-gold: rgba(211, 176, 61, 0.15);
+  --glow-gold-strong: rgba(211, 176, 61, 0.35);
 }
 
+/* Enforcing strict 100vh lock to remove page scrollbar */
 body, html, #root {
   margin: 0;
   padding: 0;
-  width: 100%;
-  height: 100%;
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden; 
   background-color: var(--bg-main);
   color: var(--text-primary);
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
@@ -51,7 +57,7 @@ body, html, #root {
   margin: 0;
   font-size: 1.4rem;
   font-weight: 700;
-  color: var(--gold-accent);
+  color: var(--accent-gold);
 }
 
 .sidebar-header p {
@@ -84,7 +90,7 @@ body, html, #root {
 }
 
 .engine-card {
-  background: #090a0d;
+  background: var(--bg-main);
   border: 1px solid var(--border-subtle);
   border-radius: 12px;
   padding: 1rem;
@@ -111,7 +117,7 @@ body, html, #root {
 .engine-status-tag {
   font-size: 0.65rem;
   color: var(--text-dim);
-  background: rgba(255, 255, 255, 0.03);
+  background: rgba(255, 255, 255, 0.05);
   padding: 2px 6px;
   border-radius: 4px;
 }
@@ -123,22 +129,15 @@ body, html, #root {
   line-height: 1.4;
 }
 
-/* Dynamic Active States with Neon Borders and Glow */
-.engine-card.active.local-active {
-  background: #0f1622;
-  border-color: rgba(59, 130, 246, 0.5);
-  box-shadow: 0 0 16px var(--glow-blue);
+/* Dynamic Active States using the brand gold */
+.engine-card.active {
+  background: rgba(211, 176, 61, 0.05);
+  border-color: var(--glow-gold-strong);
+  box-shadow: 0 0 16px var(--glow-gold);
 }
-.engine-card.active.local-active .engine-title { color: #60a5fa; }
-.engine-card.active.local-active .engine-status-tag { color: #93c5fd; background: rgba(59, 130, 246, 0.1); }
+.engine-card.active .engine-title { color: var(--accent-gold); }
+.engine-card.active .engine-status-tag { color: var(--accent-gold); background: rgba(211, 176, 61, 0.1); }
 
-.engine-card.active.cloud-active {
-  background: #0d1a14;
-  border-color: rgba(16, 185, 129, 0.5);
-  box-shadow: 0 0 16px var(--glow-green);
-}
-.engine-card.active.cloud-active .engine-title { color: #34d399; }
-.engine-card.active.cloud-active .engine-status-tag { color: #6ee7b7; background: rgba(16, 185, 129, 0.1); }
 
 /* Sidebar Bottom Meta */
 .sidebar-footer {
@@ -155,8 +154,9 @@ body, html, #root {
   width: 6px;
   height: 6px;
   border-radius: 50%;
+  display: inline-block;
 }
-.status-dot.local { background-color: #3b82f6; box-shadow: 0 0 8px #3b82f6; }
+.status-dot.local { background-color: var(--accent-gold); box-shadow: 0 0 8px var(--accent-gold); }
 .status-dot.cloud { background-color: #10b981; box-shadow: 0 0 8px #10b981; }
 
 /* Main Flow Layout Canvas */
@@ -205,6 +205,7 @@ body, html, #root {
   color: var(--text-primary);
   border: 1px solid rgba(255, 255, 255, 0.04);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  text-align: left;
 }
 
 .user-bubble .body-text {
@@ -217,9 +218,9 @@ body, html, #root {
   width: 100%;
   padding: 0.25rem 0;
   position: relative;
+  text-align: left;
 }
 
-/* FIX: Box removal. No gradient wrappers, no backgrounds around the layout area */
 .ai-content-canvas.clean-loading {
   background: transparent !important;
   box-shadow: none !important;
@@ -234,7 +235,22 @@ body, html, #root {
 }
 
 .ai-avatar {
-  font-size: 1.1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.side-avatar-img {
+  width: 50px;
+  height: 50px;
+  object-fit: contain;
+  margin-bottom: 0.5rem;
+}
+
+.avatar-img {
+  width: 20px;
+  height: 20px;
+  object-fit: contain;
 }
 
 /* Clean, non-distracting animation localized only to the avatar icon */
@@ -256,9 +272,9 @@ body, html, #root {
 .badge {
   font-size: 0.6rem;
   text-transform: uppercase;
-  background: rgba(223, 194, 153, 0.08);
-  border: 1px solid rgba(223, 194, 153, 0.2);
-  color: var(--gold-accent);
+  background: rgba(211, 176, 61, 0.1);
+  border: 1px solid var(--glow-gold-strong);
+  color: var(--accent-gold);
   padding: 1px 6px;
   border-radius: 4px;
   font-weight: 700;
@@ -283,7 +299,7 @@ body, html, #root {
 
 .cite-pill {
   font-size: 0.75rem;
-  background: #14161d;
+  background: var(--bg-sidebar);
   border: 1px solid var(--border-subtle);
   padding: 4px 12px;
   border-radius: 20px;
@@ -292,7 +308,7 @@ body, html, #root {
 }
 
 .cite-pill:hover {
-  border-color: var(--gold-accent);
+  border-color: var(--accent-gold);
   color: #ffffff;
 }
 
@@ -322,7 +338,7 @@ body, html, #root {
 }
 
 .floating-bar:focus-within {
-  border-color: rgba(223, 194, 153, 0.35);
+  border-color: var(--glow-gold-strong);
   box-shadow: 0 0 24px var(--glow-gold), 0 10px 30px rgba(0, 0, 0, 0.5);
 }
 
@@ -341,7 +357,7 @@ body, html, #root {
 }
 
 .send-btn {
-  background-color: var(--text-primary);
+  background-color: var(--accent-gold);
   color: var(--bg-main);
   border: none;
   width: 38px;
@@ -356,6 +372,7 @@ body, html, #root {
 
 .send-btn:hover:not(:disabled) {
   opacity: 0.95;
+  transform: scale(1.05);
 }
 
 .send-btn:disabled {
@@ -375,7 +392,7 @@ body, html, #root {
 .typing-indicator span {
   width: 5px;
   height: 5px;
-  background-color: var(--gold-accent);
+  background-color: var(--accent-gold);
   border-radius: 50%;
   animation: typing 1.4s infinite ease-in-out both;
 }
