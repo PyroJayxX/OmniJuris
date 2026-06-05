@@ -2,7 +2,7 @@
 
 > Note: This project is a work in progress.
 
-OmniJuris is a full-stack retrieval-augmented generation system over Philippine jurisprudence, built on the **Philippine OmniCorpus** dataset (Ramos, 2024). Powered by BGE-M3 embeddings, ChromaDB vector search, cross-encoder reranking, and a locally-hosted Gemma2 27B LLM. 
+OmniJuris is a full-stack retrieval-augmented generation system over Philippine jurisprudence, built on the **Philippine OmniCorpus** dataset (Ramos, 2024). Powered by BGE-M3 embeddings, ChromaDB vector search, cross-encoder reranking, and a locally-hosted Gemma2 27B LLM via ollama. 
 
 ## Stack
 
