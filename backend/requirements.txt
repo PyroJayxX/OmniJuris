@@ -1,0 +1,14 @@
+fastapi
+uvicorn[standard]
+python-dotenv
+requests
+chromadb
+sentence-transformers
+torch
+transformers
+langchain
+langchain-community
+datasets
+pyarrow
+pandas
+google-generativeai
