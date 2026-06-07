@@ -8,10 +8,10 @@ import torch
 INPUT_PATH      = Path(__file__).parent.parent / "data" / "raw" / "chunks.parquet"
 CHROMA_PATH     = Path(__file__).parent.parent / "data" / "chroma"
 COLLECTION_NAME = "omnijuris"
-EMBEDDING_MODEL = "BAAI/bge-m3"
+EMBEDDING_MODEL = "intfloat/multilingual-e5-base"
 
-ENCODE_BATCH_SIZE = 512   # fed to GPU at once — increase if VRAM allows
-CHROMA_ADD_SIZE   = 5000  # rows upserted to ChromaDB at once
+ENCODE_BATCH_SIZE = 512
+CHROMA_ADD_SIZE   = 5000
 
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 
@@ -27,9 +27,7 @@ embedder = SentenceTransformer(EMBEDDING_MODEL, device=DEVICE)
 
 
 def build_metadatas(batch_df: pd.DataFrame) -> list[dict]:
-    """Vectorized metadata builder — no iterrows."""
     meta_cols = [c for c in batch_df.columns if c not in ("chunk_id", "chunk_text", "chunk_index")]
-    # Convert whole sub-frame to string, replace nan/empty with None
     sub = batch_df[meta_cols].astype(str).replace({"nan": None, "": None, "None": None})
     records = sub.to_dict(orient="records")
     out = []
@@ -42,9 +40,8 @@ def build_metadatas(batch_df: pd.DataFrame) -> list[dict]:
 
 
 def get_existing_ids(collection) -> set[str]:
-    """Fetch all IDs already in the collection to enable resume."""
     log.info("Fetching existing IDs for resume support...")
-    result = collection.get(include=[])          # IDs only, no embeddings
+    result = collection.get(include=[])
     existing = set(result["ids"])
     log.info("Found %d existing vectors", len(existing))
     return existing
@@ -62,7 +59,6 @@ def run() -> None:
         metadata={"hnsw:space": "cosine"},
     )
 
-    # Resume: skip already-embedded chunks
     existing_ids = get_existing_ids(collection)
     if existing_ids:
         before = len(df)
@@ -77,8 +73,6 @@ def run() -> None:
     log.info("Embedding %d chunks (encode_batch=%d, chroma_batch=%d)",
              total, ENCODE_BATCH_SIZE, CHROMA_ADD_SIZE)
 
-    # --- embed everything first, then add in large batches ---
-    # This lets the GPU run uninterrupted without ChromaDB I/O stalls
     for chroma_start in range(0, total, CHROMA_ADD_SIZE):
         chunk_df = df.iloc[chroma_start : chroma_start + CHROMA_ADD_SIZE]
 
@@ -86,19 +80,21 @@ def run() -> None:
         ids       = chunk_df["chunk_id"].tolist()
         metadatas = build_metadatas(chunk_df)
 
-        # GPU encodes the whole chroma-batch in GPU micro-batches
+        # Prefix only for the encoder, not stored in ChromaDB
+        encoded_texts = ["passage: " + t for t in texts]
+
         embeddings = embedder.encode(
-            texts,
+            encoded_texts,
             batch_size=ENCODE_BATCH_SIZE,
             normalize_embeddings=True,
-            show_progress_bar=True,       # per-chroma-batch progress bar
+            show_progress_bar=True,
             convert_to_numpy=True,
         ).tolist()
 
         collection.add(
             ids=ids,
             embeddings=embeddings,
-            documents=texts,
+            documents=texts,        # original text, no prefix
             metadatas=metadatas,
         )
 
