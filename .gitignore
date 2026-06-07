@@ -216,8 +216,8 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
-data/chroma/
-data/raw/
+backend/data/chroma/
+backend/data/raw/
 *.sqlite3
 *.db
 *.bin
