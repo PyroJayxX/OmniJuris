@@ -23,7 +23,7 @@ logging.basicConfig(
 log = logging.getLogger("omnijuris.embedder")
 
 log.info("Loading embedding model '%s' on device: %s", EMBEDDING_MODEL, DEVICE)
-embedder = SentenceTransformer(EMBEDDING_MODEL, device=DEVICE)
+embedder = SentenceTransformer(EMBEDDING_MODEL, device=DEVICE) 
 
 
 def build_metadatas(batch_df: pd.DataFrame) -> list[dict]:
@@ -49,15 +49,36 @@ def get_existing_ids(collection) -> set[str]:
 
 def run() -> None:
     log.info("Loading chunks from %s", INPUT_PATH)
+    REMOVE_LABELS = {
+        "Decisions / Signed Resolutions",
+        "1986 ConCom",
+        "1934-35 ConCon",
+        "1986 Draft Constitution",
+        "Bilateral",
+        "Regional / Multilateral",
+        "Lawyers' List",
+        "Benchbooks",
+        "Manuals of Clerks of Court",
+        "Fundamentals of Decision Writing",
+        "Manual of Judicial Writing",
+        "Official Gazette",
+        "Election Cases",
+    }
+
     df = pd.read_parquet(INPUT_PATH)
-    log.info("Loaded %d chunks", len(df))
+    df = df[~df["label"].isin(REMOVE_LABELS)].reset_index(drop=True)
+    log.info("Loaded %d chunks after filtering", len(df))
 
     CHROMA_PATH.mkdir(parents=True, exist_ok=True)
     client     = chromadb.PersistentClient(path=str(CHROMA_PATH))
     collection = client.get_or_create_collection(
         name=COLLECTION_NAME,
-        metadata={"hnsw:space": "cosine"},
-    )
+        metadata={
+            "hnsw:space": "cosine",
+            "hnsw:batch_size": 50000,
+            "hnsw:sync_threshold": 100000,
+        },
+)
 
     existing_ids = get_existing_ids(collection)
     if existing_ids:
