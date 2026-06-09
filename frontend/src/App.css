@@ -175,7 +175,7 @@ body, html, #root {
 }
 
 .conversation-flow {
-  max-width: 1024px;
+  max-width: 900px;
   margin: 0 auto;
   padding: 3rem 1.5rem;
   display: flex;
@@ -326,7 +326,7 @@ body, html, #root {
 
 .floating-bar {
   width: 100%;
-  max-width: 1100px;
+  max-width: 950px;
   background-color: var(--bg-input);
   border: 1px solid var(--border-subtle);
   border-radius: 28px;
