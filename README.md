@@ -1,15 +1,6 @@
-# OmniJuris
-### Philippine Legal Intelligence
+<h1><img src="frontend/public/omnijuris.png" alt="OmniJuris Screenshot" width="50"></img> OmniJuris – Philippine Legal Intelligence</h1>
 
-> Note: This project is a work in progress.
-
-A retrieval-augmented generation system over Philippine jurisprudence, built on the **Philippine OmniCorpus** dataset (Ramos, 2024). Powered by multilingual-e5-base embeddings, ChromaDB vector search, cross-encoder reranking, and dual inference engines: a locally-hosted Qwen3 4B via Ollama and Gemini 3.5 Flash.
-
----
-
-## Screenshot
-
-![OmniJuris Screenshot](docs/images/omnijuris_ss.png)
+- A retrieval-augmented generation system over Philippine jurisprudence, built on the **Philippine OmniCorpus** dataset (Ramos, 2024). Powered by multilingual-e5-base embeddings, ChromaDB vector search, cross-encoder reranking, and dual inference engines: a locally-hosted Qwen3 4B via Ollama and Gemini 3.5 Flash.
 
 ## Stack
 
@@ -17,12 +8,14 @@ A retrieval-augmented generation system over Philippine jurisprudence, built on 
 |---|---|
 | Dataset | Philippine OmniCorpus (HuggingFace) |
 | Embedding Model | intfloat/multilingual-e5-base |
-| Vector Store | ChromaDB (~800k vectors) |
+| Vector Store | ChromaDB (~800k vectors after cleaning) |
 | Reranker | cross-encoder/ms-marco-MiniLM-L-6-v2 |
 | Local LLM | Qwen3 4B Instruct via Ollama |
 | Cloud LLM | Gemini 3.5 Flash via Google AI API |
 | Backend | FastAPI + streaming (SSE) |
 | Frontend | React + TypeScript + Vite |
+
+![OmniJuris Screenshot](docs/images/omnijuris_ss.png)
 
 ## Features
 
@@ -36,14 +29,11 @@ A retrieval-augmented generation system over Philippine jurisprudence, built on 
 
 ## Example Queries
 
-```
-"What is the penalty for estafa under the Revised Penal Code?"
-"Ano ang karapatan ng manggagawa sa illegal dismissal?"
-"What are the elements of murder versus homicide?"
-"What constitutes grave abuse of discretion?"
-```
+- "What is the penalty for estafa under the Revised Penal Code?"
+- "Ano ang karapatan ng manggagawa sa illegal dismissal?"
+- "What are the elements of murder versus homicide?"
+- "What constitutes grave abuse of discretion?"
 
----
 
 ## Dataset
 
@@ -58,8 +48,6 @@ This project uses the [**Philippine OmniCorpus**](https://huggingface.co/dataset
   url    = {https://huggingface.co/datasets/mongramosjr/philippine-omnicorpus}
 }
 ```
-
----
 
 ## License
 
