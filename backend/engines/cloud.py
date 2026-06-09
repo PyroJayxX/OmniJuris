@@ -32,7 +32,7 @@ def generate_cloud(prompt: str) -> str:
             contents=prompt,
             config=types.GenerateContentConfig(
                 temperature=0.1,
-                max_output_tokens=1024,
+                max_output_tokens=4096,
             ),
         )
         return response.text.strip()
