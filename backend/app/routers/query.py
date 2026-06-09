@@ -5,19 +5,18 @@ Handles retrieval, reranking, and LLM generation for both local and cloud modes.
 """
 
 from fastapi import APIRouter, HTTPException
+from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 from core.retriever import retrieve
 from core.reranker import rerank
 from core.prompt import build_prompt
 from engines.local import generate_local
 from engines.cloud import generate_cloud
+from engines.local import stream_local
+from engines.cloud import stream_cloud
+import json
 
 router = APIRouter(tags=["query"])
-
-
-# ---------------------------------------------------------------------------
-# Request / Response models
-# ---------------------------------------------------------------------------
 
 class QueryRequest(BaseModel):
     query:         str
@@ -32,11 +31,6 @@ class QueryResponse(BaseModel):
     engine_mode: str
     citations:   list[str]
     chunks_used: int
-
-
-# ---------------------------------------------------------------------------
-# Endpoint
-# ---------------------------------------------------------------------------
 
 @router.post("/query", response_model=QueryResponse)
 async def query(request: QueryRequest) -> QueryResponse:
@@ -100,3 +94,53 @@ async def query(request: QueryRequest) -> QueryResponse:
         citations=citations,
         chunks_used=len(reranked_chunks),
     )
+
+
+
+@router.post("/query/stream")
+async def query_stream(request: QueryRequest):
+    """Streaming version — yields tokens as they arrive."""
+    
+    if not request.query.strip():
+        raise HTTPException(status_code=400, detail="Query cannot be empty.")
+
+    mode = request.override_mode.lower()
+
+    # Retrieval + reranking (same as before)
+    chunks, metadatas = retrieve(request.query, top_k=request.top_k)
+    
+    if not chunks:
+        async def empty():
+            yield json.dumps({"token": "I could not find relevant information in the legal corpus.", "done": False})
+            yield json.dumps({"done": True, "citations": [], "chunks_used": 0})
+        return StreamingResponse(empty(), media_type="text/event-stream")
+
+    reranked_chunks, reranked_metadatas = rerank(
+        query=request.query,
+        chunks=chunks,
+        metadatas=metadatas,
+        top_n=request.top_n,
+    )
+
+    prompt = build_prompt(
+        query=request.query,
+        chunks=reranked_chunks,
+        thinking_mode=request.thinking_mode,
+    )
+
+    citations = []
+    for meta in reranked_metadatas:
+        source = meta.get("source", "")
+        if source and source not in citations:
+            citations.append(source)
+
+    async def stream_tokens():
+        if mode == "cloud":
+            async for token in stream_cloud(prompt):
+                yield json.dumps({"token": token, "done": False}) + "\n"
+        else:
+            async for token in stream_local(prompt, request.thinking_mode):
+                yield json.dumps({"token": token, "done": False}) + "\n"
+        yield json.dumps({"done": True, "citations": citations, "chunks_used": len(reranked_chunks)}) + "\n"
+
+    return StreamingResponse(stream_tokens(), media_type="text/event-stream")

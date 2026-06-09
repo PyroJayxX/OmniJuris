@@ -7,6 +7,7 @@ import os
 from google import genai
 from google.genai import types
 from dotenv import load_dotenv
+import json
 
 load_dotenv()
 
@@ -40,3 +41,20 @@ def generate_cloud(prompt: str) -> str:
         return f"Cloud engine unavailable: {str(e)}"
     except Exception as e:
         return f"Cloud engine error: {str(e)}"
+    
+async def stream_cloud(prompt: str):
+    try:
+        client = _get_client()
+        response = client.models.generate_content_stream(
+            model=GEMINI_MODEL,
+            contents=prompt,
+            config=types.GenerateContentConfig(
+                temperature=0.1,
+                max_output_tokens=4096,
+            ),
+        )
+        for chunk in response:
+            if chunk.text:
+                yield chunk.text
+    except Exception as e:
+        yield f"Cloud engine error: {str(e)}"

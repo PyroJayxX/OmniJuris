@@ -5,6 +5,7 @@ Runs Qwen3:4b-instruct locally. Supports thinking mode.
 """
 
 import requests
+import json
 
 OLLAMA_URL      = "http://localhost:11434/api/generate"
 LOCAL_MODEL     = "qwen3:4b-instruct"
@@ -52,3 +53,33 @@ def generate_local(prompt: str, thinking_mode: bool = False) -> str:
         return "Local engine timed out. The model may be loading — try again in a moment."
     except Exception as e:
         return f"Local engine error: {str(e)}"
+
+import asyncio
+
+async def stream_local(prompt: str, thinking_mode: bool = False):
+    payload = {
+        "model": LOCAL_MODEL,
+        "prompt": prompt,
+        "stream": True,
+        "options": {
+            "temperature": 0.1,
+            "top_p": 0.9,
+            "num_predict": 4096,
+        },
+    }
+    if thinking_mode:
+        payload["options"]["think"] = True
+
+    try:
+        import httpx
+        async with httpx.AsyncClient(timeout=300) as client:
+            async with client.stream("POST", OLLAMA_URL, json=payload) as response:
+                async for line in response.aiter_lines():
+                    if line:
+                        data = json.loads(line)
+                        if data.get("response"):
+                            yield data["response"]
+                        if data.get("done"):
+                            break
+    except Exception as e:
+        yield f"Local engine error: {str(e)}"
