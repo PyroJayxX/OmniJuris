@@ -175,7 +175,7 @@ body, html, #root {
 }
 
 .conversation-flow {
-  max-width: 780px;
+  max-width: 1024px;
   margin: 0 auto;
   padding: 3rem 1.5rem;
   display: flex;
@@ -326,7 +326,7 @@ body, html, #root {
 
 .floating-bar {
   width: 100%;
-  max-width: 780px;
+  max-width: 1100px;
   background-color: var(--bg-input);
   border: 1px solid var(--border-subtle);
   border-radius: 28px;
@@ -403,4 +403,59 @@ body, html, #root {
 @keyframes typing {
   0%, 80%, 100% { transform: scale(0.6); opacity: 0.3; }
   40% { transform: scale(1.1); opacity: 1; }
+}
+
+/* Markdown spacing fixes */
+.body-text p {
+  margin: 0 0 0.5rem 0;
+}
+
+.body-text p:last-child {
+  margin-bottom: 0;
+}
+
+.body-text h1,
+.body-text h2,
+.body-text h3 {
+  margin: 0.75rem 0 0.4rem 0;
+  color: var(--text-primary);
+}
+
+.body-text ul,
+.body-text ol {
+  margin: 0.25rem 0 0.5rem 0;
+  padding-left: 1.5rem;
+}
+
+.body-text li {
+  margin-bottom: 0.2rem;
+}
+
+.body-text li p {
+  margin: 0;
+}
+
+.body-text strong {
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.body-text code {
+  background: rgba(255, 255, 255, 0.06);
+  padding: 1px 5px;
+  border-radius: 4px;
+  font-size: 0.875em;
+  color: var(--accent-gold);
+}
+
+.body-text blockquote {
+  border-left: 3px solid var(--glow-gold-strong);
+  margin: 0.5rem 0;
+  padding-left: 1rem;
+  color: var(--text-dim);
+}
+
+/* Remove pre-wrap since ReactMarkdown handles structure */
+.ai-content-canvas .body-text {
+  white-space: normal;
 }
