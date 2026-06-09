@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from 'react'
 import './App.css'
+import ReactMarkdown from 'react-markdown';
 
 interface Message {
   id: string;
@@ -14,11 +15,13 @@ function App() {
     {
       id: 'welcome',
       sender: 'system',
-      text: 'Mabuhay! Welcome to OmniJuris. I am grounded directly in Philippine Supreme Court jurisprudence, republic acts, and executive issuances. How can I assist your legal research today?'    }
+      text: 'Mabuhay! Welcome to OmniJuris. I am grounded directly in Philippine Supreme Court jurisprudence, republic acts, and executive issuances. How can I assist your legal research today?'
+    }
   ]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [llmMode, setLlmMode] = useState<'local' | 'cloud'>('local');
+  const [thinkingMode, setThinkingMode] = useState(false);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -33,32 +36,58 @@ function App() {
     const userQuery = input.trim();
     setInput('');
 
-    setMessages(prev => [...prev, { id: crypto.randomUUID(), sender: 'user', text: userQuery }]);
+    const userMsg: Message = { id: crypto.randomUUID(), sender: 'user', text: userQuery };
+    const assistantMsg: Message = { id: crypto.randomUUID(), sender: 'system', text: '', engineMode: llmMode };
+
+    setMessages(prev => [...prev, userMsg, assistantMsg]);
     setIsLoading(true);
 
     try {
-      const response = await fetch('http://localhost:8000/query', {
+      const response = await fetch('http://localhost:8000/query/stream', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ query: userQuery, override_mode: llmMode }),
+        body: JSON.stringify({
+          query: userQuery,
+          override_mode: llmMode,
+          thinking_mode: thinkingMode
+        }),
       });
 
-      if (!response.ok) throw new Error('Network error');
-      const data = await response.json();
+      const reader = response.body!.getReader();
+      const decoder = new TextDecoder();
+      let citations: string[] = [];
 
-      setMessages(prev => [...prev, {
-        id: crypto.randomUUID(),
-        sender: 'system',
-        text: data.answer,
-        engineMode: data.engine_mode,
-        citations: data.citations || []
-      }]);
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        const lines = decoder.decode(value).split('\n').filter(Boolean);
+        for (const line of lines) {
+          try {
+            const data = JSON.parse(line);
+            if (data.done) {
+              citations = data.citations || [];
+              setMessages(prev => prev.map(msg =>
+                msg.id === assistantMsg.id
+                  ? { ...msg, citations }
+                  : msg
+              ));
+            } else if (data.token) {
+              setMessages(prev => prev.map(msg =>
+                msg.id === assistantMsg.id
+                  ? { ...msg, text: msg.text + data.token }
+                  : msg
+              ));
+            }
+          } catch {}
+        }
+      }
     } catch (error) {
-      setMessages(prev => [...prev, {
-        id: crypto.randomUUID(),
-        sender: 'system',
-        text: 'Error connecting to OmniJuris backend. Ensure your FastAPI server is running.'
-      }]);
+      setMessages(prev => prev.map(msg =>
+        msg.id === assistantMsg.id
+          ? { ...msg, text: 'Error connecting to OmniJuris backend.' }
+          : msg
+      ));
     } finally {
       setIsLoading(false);
     }
@@ -66,7 +95,7 @@ function App() {
 
   return (
     <div className="omnijuris-workspace">
-      {/* Sidebar Controls */}
+      {/* Sidebar */}
       <aside className="sidebar">
         <span className="ai-avatar">
           <img src="/omnijuris.png" alt="OmniJuris Logo" className="side-avatar-img" />
@@ -76,34 +105,55 @@ function App() {
           <p>Philippine Legal Intelligence</p>
         </div>
 
+        {/* Inference Engine */}
         <div className="config-group">
           <label className="config-label">Inference Engine</label>
-          {/* Stacked Vertical Controls */}
           <div className="vertical-controls">
-            <button 
-              type="button" 
-              className={`engine-card ${llmMode === 'local' ? 'active local-active' : ''}`} 
+            <button
+              type="button"
+              className={`engine-card ${llmMode === 'local' ? 'active local-active' : ''}`}
               onClick={() => setLlmMode('local')}
             >
               <div className="engine-card-header">
                 <span className="engine-title">Local Engine</span>
                 <span className="engine-status-tag">Air-Gapped</span>
               </div>
-              <p className="engine-details">Gemma2 27B via Ollama. Completely offline.</p>
+              <p className="engine-details">Qwen3 4B via Ollama. Completely offline.</p>
             </button>
 
-            <button 
-              type="button" 
-              className={`engine-card ${llmMode === 'cloud' ? 'active cloud-active' : ''}`} 
+            <button
+              type="button"
+              className={`engine-card ${llmMode === 'cloud' ? 'active cloud-active' : ''}`}
               onClick={() => setLlmMode('cloud')}
             >
               <div className="engine-card-header">
                 <span className="engine-title">Cloud Engine</span>
                 <span className="engine-status-tag">API</span>
               </div>
-              <p className="engine-details">Gemini Production API. High throughput.</p>
+              <p className="engine-details">Gemini 3.5 Flash. High throughput.</p>
             </button>
           </div>
+        </div>
+
+        {/* Thinking Mode — only relevant for local */}
+        <div className="config-group">
+          <label className="config-label">Reasoning Mode</label>
+          <button
+            type="button"
+            className={`engine-card ${thinkingMode ? 'active local-active' : ''}`}
+            onClick={() => setThinkingMode(prev => !prev)}
+            disabled={llmMode === 'cloud'}
+          >
+            <div className="engine-card-header">
+              <span className="engine-title">Extended Thinking</span>
+              <span className="engine-status-tag">{thinkingMode ? 'ON' : 'OFF'}</span>
+            </div>
+            <p className="engine-details">
+              {llmMode === 'cloud'
+                ? 'Not available for cloud engine.'
+                : 'Qwen3 reasons step-by-step before answering. Slower but more accurate.'}
+            </p>
+          </button>
         </div>
 
         <div className="sidebar-footer">
@@ -111,7 +161,7 @@ function App() {
         </div>
       </aside>
 
-      {/* Main Framework Viewport */}
+      {/* Main canvas */}
       <main className="main-canvas">
         <div className="viewport-scroll">
           <div className="conversation-flow">
@@ -124,10 +174,19 @@ function App() {
                         <img src="/omnijuris.png" alt="OmniJuris Logo" className="avatar-img" />
                       </span>
                       <span className="author-name">OmniJuris</span>
-                      {msg.engineMode && <span className="badge">{msg.engineMode}</span>}
+                      {msg.engineMode && (
+                        <span className="badge">
+                          {msg.engineMode === 'local' ? 'Qwen3 4B' : 'Gemini 3.5 Flash'}
+                        </span>
+                      )}
+                      {msg.engineMode === 'local' && thinkingMode && (
+                        <span className="badge">thinking</span>
+                      )}
                     </div>
-                    <div className="body-text">{msg.text}</div>
-                    
+                    <div className="body-text">
+                      <ReactMarkdown>{msg.text}</ReactMarkdown>
+                    </div>
+
                     {msg.citations && msg.citations.length > 0 && (
                       <div className="citations-tray">
                         {msg.citations.map((cite, idx) => (
@@ -165,7 +224,7 @@ function App() {
           </div>
         </div>
 
-        {/* Input Interface */}
+        {/* Input */}
         <footer className="input-zone">
           <form onSubmit={handleSendMessage} className="floating-bar">
             <input
