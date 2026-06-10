@@ -1,5 +1,5 @@
-import { useState, useRef, useEffect } from 'react'
-import './App.css'
+import { useState, useRef, useEffect } from 'react';
+import './App.css';
 import ReactMarkdown from 'react-markdown';
 
 interface Message {
@@ -11,6 +11,8 @@ interface Message {
 }
 
 function App() {
+  const isHosted = import.meta.env.VITE_IS_HOSTED === 'true';
+
   const [messages, setMessages] = useState<Message[]>([
     {
       id: 'welcome',
@@ -20,7 +22,8 @@ function App() {
   ]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [llmMode, setLlmMode] = useState<'local' | 'cloud'>('local');
+  
+  const [llmMode, setLlmMode] = useState<'local' | 'cloud'>(isHosted ? 'cloud' : 'local');
   const [thinkingMode, setThinkingMode] = useState(false);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -28,6 +31,12 @@ function App() {
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, isLoading]);
+
+  useEffect(() => {
+    if (llmMode === 'cloud') {
+      setThinkingMode(false);
+    }
+  }, [llmMode]);
 
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -42,8 +51,10 @@ function App() {
     setMessages(prev => [...prev, userMsg, assistantMsg]);
     setIsLoading(true);
 
+    const backendUrl = isHosted ? 'https://your-render-backend-url.com/query/stream' : 'http://localhost:8000/query/stream';
+
     try {
-      const response = await fetch('http://localhost:8000/query/stream', {
+      const response = await fetch(backendUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -111,14 +122,19 @@ function App() {
           <div className="vertical-controls">
             <button
               type="button"
-              className={`engine-card ${llmMode === 'local' ? 'active local-active' : ''}`}
+              className={`engine-card ${llmMode === 'local' ? 'active local-active' : ''} ${isHosted ? 'disabled-card' : ''}`}
               onClick={() => setLlmMode('local')}
+              disabled={isHosted} // 3. Disable the button entirely if hosted
             >
               <div className="engine-card-header">
                 <span className="engine-title">Local Engine</span>
-                <span className="engine-status-tag">Air-Gapped</span>
+                <span className="engine-status-tag">{isHosted ? 'UNAVAILABLE' : 'Air-Gapped'}</span>
               </div>
-              <p className="engine-details">Qwen3 4B via Ollama. Completely offline.</p>
+              <p className="engine-details">
+                {isHosted 
+                  ? 'Local Ollama node is disabled in the web demo.' 
+                  : 'Qwen3 4B via Ollama. Completely offline.'}
+              </p>
             </button>
 
             <button
@@ -135,18 +151,19 @@ function App() {
           </div>
         </div>
 
-        {/* Thinking Mode — only relevant for local */}
+        {/* Thinking Mode */}
         <div className="config-group">
           <label className="config-label">Reasoning Mode</label>
           <button
             type="button"
-            className={`engine-card ${thinkingMode ? 'active local-active' : ''}`}
+            // 4. Bug Fix: Only apply active class if thinking mode is true AND we are actually on local mode
+            className={`engine-card ${thinkingMode && llmMode === 'local' ? 'active local-active' : ''}`}
             onClick={() => setThinkingMode(prev => !prev)}
             disabled={llmMode === 'cloud'}
           >
             <div className="engine-card-header">
               <span className="engine-title">Extended Thinking</span>
-              <span className="engine-status-tag">{thinkingMode ? 'ON' : 'OFF'}</span>
+              <span className="engine-status-tag">{thinkingMode && llmMode === 'local' ? 'ON' : 'OFF'}</span>
             </div>
             <p className="engine-details">
               {llmMode === 'cloud'

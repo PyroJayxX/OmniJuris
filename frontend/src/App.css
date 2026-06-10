@@ -459,3 +459,45 @@ body, html, #root {
 .ai-content-canvas .body-text {
   white-space: normal;
 }
+
+/* Mobile Responsive Overrides */
+@media screen and (max-width: 768px) {
+  .sidebar {
+    display: none !important;
+  }
+  
+  .omnijuris-workspace {
+    /* If your workspace uses grid, this forces the main canvas to take the full width */
+    grid-template-columns: 1fr !important;
+    display: block; 
+  }
+
+  .conversation-flow {
+  max-width: 500px;
+  margin: 0 auto;
+  padding: 3rem 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 2.5rem;
+}
+
+  .floating-bar {
+    width: 100%;
+    max-width: 500px;
+    background-color: var(--bg-input);
+    border: 1px solid var(--border-subtle);
+    border-radius: 28px;
+    display: flex;
+    align-items: center;
+    padding: 8px 8px 8px 1.5rem;
+    box-sizing: border-box;
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+}
+
+/* Optional styling for the disabled button state */
+.disabled-card {
+  opacity: 0.5;
+  cursor: not-allowed !important;
+  pointer-events: none;
+}
