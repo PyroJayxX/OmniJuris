@@ -6,6 +6,10 @@ A retrieval-augmented generation system over Philippine jurisprudence, built on 
 
 </div>
 
+<div align="center">
+  <img src="docs/images/omnijuris_ss_2.png" alt="OmniJuris Screenshot" width="85%">
+</div>
+
 ## 🛠️ Stack
 
 <div align="center">
@@ -21,10 +25,6 @@ A retrieval-augmented generation system over Philippine jurisprudence, built on 
 | **Backend** | FastAPI + streaming (SSE) |
 | **Frontend** | React + TypeScript + Vite |
 
-</div>
-
-<div align="center">
-  <img src="docs/images/omnijuris_ss_2.png" alt="OmniJuris Screenshot" width="85%">
 </div>
 
 ## ✨ Features
