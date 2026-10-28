@@ -6,6 +6,7 @@ OmniJuris — FastAPI entrypoint
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.routers.query import router as query_router
+from app.routers.models import router as models_router
 
 app = FastAPI(
     title="OmniJuris API",
@@ -22,6 +23,7 @@ app.add_middleware(
 )
 
 app.include_router(query_router)
+app.include_router(models_router)
 
 
 @app.get("/health")

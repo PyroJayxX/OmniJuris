@@ -7,7 +7,15 @@ interface Message {
   sender: 'user' | 'system';
   text: string;
   engineMode?: 'local' | 'cloud';
+  modelUsed?: string;
   citations?: string[];
+}
+
+interface LocalModelsState {
+  loading: boolean;
+  available: boolean;
+  models: string[];
+  message: string | null;
 }
 
 function App() {
@@ -26,6 +34,14 @@ function App() {
   const [llmMode, setLlmMode] = useState<'local' | 'cloud'>(isHosted ? 'cloud' : 'local');
   const [thinkingMode, setThinkingMode] = useState(false);
 
+  const [localModels, setLocalModels] = useState<LocalModelsState>({
+    loading: !isHosted,
+    available: false,
+    models: [],
+    message: null,
+  });
+  const [selectedModel, setSelectedModel] = useState('');
+
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -38,15 +54,58 @@ function App() {
     }
   }, [llmMode]);
 
+  useEffect(() => {
+    if (isHosted) return;
+    fetch('http://localhost:8000/models/local')
+      .then(res => res.json())
+      .then(data => {
+        setLocalModels({
+          loading: false,
+          available: data.available,
+          models: data.models ?? [],
+          message: data.message ?? null,
+        });
+        if (data.default_model) setSelectedModel(data.default_model);
+      })
+      .catch(() => {
+        setLocalModels({
+          loading: false,
+          available: false,
+          models: [],
+          message: 'Could not reach OmniJuris backend to list local models.',
+        });
+      });
+  }, [isHosted]);
+
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!input.trim() || isLoading) return;
 
     const userQuery = input.trim();
+
+    if (llmMode === 'local' && !isHosted && (!localModels.available || !selectedModel)) {
+      const userMsg: Message = { id: crypto.randomUUID(), sender: 'user', text: userQuery };
+      const assistantMsg: Message = {
+        id: crypto.randomUUID(),
+        sender: 'system',
+        text: localModels.message || 'No local model available. Install one with `ollama pull <model>` and refresh.',
+        engineMode: 'local',
+      };
+      setMessages(prev => [...prev, userMsg, assistantMsg]);
+      setInput('');
+      return;
+    }
+
     setInput('');
 
     const userMsg: Message = { id: crypto.randomUUID(), sender: 'user', text: userQuery };
-    const assistantMsg: Message = { id: crypto.randomUUID(), sender: 'system', text: '', engineMode: llmMode };
+    const assistantMsg: Message = {
+      id: crypto.randomUUID(),
+      sender: 'system',
+      text: '',
+      engineMode: llmMode,
+      modelUsed: llmMode === 'local' ? selectedModel : undefined,
+    };
 
     setMessages(prev => [...prev, userMsg, assistantMsg]);
     setIsLoading(true);
@@ -60,7 +119,8 @@ function App() {
         body: JSON.stringify({
           query: userQuery,
           override_mode: llmMode,
-          thinking_mode: thinkingMode
+          thinking_mode: thinkingMode,
+          model: llmMode === 'local' ? selectedModel : undefined,
         }),
       });
 
@@ -131,11 +191,54 @@ function App() {
                 <span className="engine-status-tag">{isHosted ? 'UNAVAILABLE' : 'Air-Gapped'}</span>
               </div>
               <p className="engine-details">
-                {isHosted 
-                  ? 'Local Ollama node is disabled in the web demo.' 
-                  : 'Qwen3 4B via Ollama. Completely offline.'}
+                {isHosted
+                  ? 'Local Ollama node is disabled in the web demo.'
+                  : 'Locally installed Ollama models. Completely offline.'}
               </p>
             </button>
+
+            {!isHosted && llmMode === 'local' && (
+              localModels.loading ? (
+                <div className="engine-card disabled-card">
+                  <p className="engine-details">Checking for local Ollama models...</p>
+                </div>
+              ) : localModels.available ? (
+                <div className="config-group model-picker">
+                  <div className="model-picker-header">
+                    <label className="config-label" htmlFor="local-model-select">Local Model</label>
+                    <span className="model-provider">OLLAMA</span>
+                  </div>
+                  <div className="model-select-shell">
+                    <span className="model-indicator" aria-hidden="true" />
+                    <select
+                      id="local-model-select"
+                      className="model-select"
+                      value={selectedModel}
+                      onChange={(e) => setSelectedModel(e.target.value)}
+                      aria-label="Select local Ollama model"
+                    >
+                      {localModels.models.map(name => (
+                        <option key={name} value={name}>{name}</option>
+                      ))}
+                    </select>
+                    <span className="model-chevron" aria-hidden="true">⌄</span>
+                  </div>
+                  <p className="model-helper">
+                    Choose an installed model for offline legal research.
+                  </p>
+                </div>
+              ) : (
+                <div className="engine-card disabled-card">
+                  <div className="engine-card-header">
+                    <span className="engine-title">No Local Models</span>
+                    <span className="engine-status-tag">UNAVAILABLE</span>
+                  </div>
+                  <p className="engine-details">
+                    {localModels.message || 'Ollama is not reachable. Start it with: ollama serve'}
+                  </p>
+                </div>
+              )
+            )}
 
             <button
               type="button"
@@ -193,7 +296,7 @@ function App() {
                       <span className="author-name">OmniJuris</span>
                       {msg.engineMode && (
                         <span className="badge">
-                          {msg.engineMode === 'local' ? 'Qwen3 4B' : 'Gemini 3.5 Flash'}
+                          {msg.engineMode === 'local' ? (msg.modelUsed || 'Local') : 'Gemini 3.5 Flash'}
                         </span>
                       )}
                       {msg.engineMode === 'local' && thinkingMode && (

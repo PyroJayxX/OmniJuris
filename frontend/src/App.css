@@ -129,6 +129,91 @@ body, html, #root {
   line-height: 1.4;
 }
 
+.model-select {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 100%;
+  box-sizing: border-box;
+  min-height: 46px;
+  background: transparent;
+  border: 0;
+  padding: 0.7rem 2.5rem 0.7rem 2.7rem;
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+.model-picker-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.55rem;
+}
+.model-picker-header .config-label {
+  margin-bottom: 0;
+}
+.model-provider {
+  color: var(--accent-gold);
+  background: rgba(211, 176, 61, 0.1);
+  border: 1px solid rgba(211, 176, 61, 0.2);
+  border-radius: 999px;
+  padding: 0.2rem 0.45rem;
+  font-size: 0.58rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+}
+.model-select-shell {
+  position: relative;
+  background: linear-gradient(135deg, rgba(211, 176, 61, 0.1), var(--bg-input) 42%);
+  border: 1px solid var(--border-subtle);
+  border-radius: 12px;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03);
+  transition: border-color 0.2s, box-shadow 0.2s, transform 0.2s;
+}
+.model-select-shell:hover {
+  border-color: rgba(211, 176, 61, 0.5);
+  transform: translateY(-1px);
+}
+.model-select-shell:focus-within {
+  border-color: var(--accent-gold);
+  box-shadow: 0 0 16px var(--glow-gold);
+}
+.model-select:focus {
+  outline: none;
+}
+.model-select option {
+  background: var(--bg-input);
+  color: var(--text-primary);
+}
+.model-indicator {
+  position: absolute;
+  top: 50%;
+  left: 0.95rem;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--accent-gold);
+  box-shadow: 0 0 9px var(--accent-gold);
+  transform: translateY(-50%);
+  pointer-events: none;
+}
+.model-chevron {
+  position: absolute;
+  top: 50%;
+  right: 0.95rem;
+  color: var(--accent-gold);
+  font-size: 1.15rem;
+  line-height: 1;
+  transform: translateY(-58%);
+  pointer-events: none;
+}
+.model-helper {
+  margin: 0.45rem 0 0;
+  color: var(--text-dim);
+  font-size: 0.68rem;
+  line-height: 1.35;
+}
+
 /* Dynamic Active States using the brand gold */
 .engine-card.active {
   background: rgba(211, 176, 61, 0.05);

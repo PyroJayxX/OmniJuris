@@ -24,6 +24,7 @@ class QueryRequest(BaseModel):
     thinking_mode: bool = False    # Qwen3 extended reasoning (local only)
     top_k:         int = 10        # chunks to retrieve before reranking
     top_n:         int = 5         # chunks to keep after reranking
+    model:         str | None = None  # Ollama model name (local mode only); falls back to default if omitted
 
 
 class QueryResponse(BaseModel):
@@ -77,7 +78,7 @@ async def query(request: QueryRequest) -> QueryResponse:
 
     # Step 4 — Generate
     if mode == "local":
-        answer = generate_local(prompt, thinking_mode=request.thinking_mode)
+        answer = generate_local(prompt, thinking_mode=request.thinking_mode, model=request.model)
     else:
         answer = generate_cloud(prompt)
 
@@ -139,7 +140,7 @@ async def query_stream(request: QueryRequest):
             async for token in stream_cloud(prompt):
                 yield json.dumps({"token": token, "done": False}) + "\n"
         else:
-            async for token in stream_local(prompt, request.thinking_mode):
+            async for token in stream_local(prompt, request.thinking_mode, request.model):
                 yield json.dumps({"token": token, "done": False}) + "\n"
         yield json.dumps({"done": True, "citations": citations, "chunks_used": len(reranked_chunks)}) + "\n"
 
